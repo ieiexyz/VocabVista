@@ -31,7 +31,7 @@ VocabMaster is a full-stack web application designed to help users expand their 
 
 ### Backend Services
 - **Gemini Service**: Interfaces with Google's Gemini AI to generate vocabulary
-- **Storage Service**: In-memory storage implementation with database schema ready
+- **Storage Service**: PostgreSQL database implementation using Drizzle ORM
 - **Route Handlers**: RESTful API endpoints for vocabulary generation
 
 ### Database Schema
@@ -87,6 +87,7 @@ VocabMaster is a full-stack web application designed to help users expand their 
 ```
 Changelog:
 - July 01, 2025. Initial setup
+- July 01, 2025. Added PostgreSQL database with Drizzle ORM, replaced in-memory storage with DatabaseStorage
 ```
 
 ## User Preferences
