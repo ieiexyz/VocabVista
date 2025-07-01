@@ -116,6 +116,17 @@ export default function VocabularyPage() {
     });
   };
 
+  const handleRemoveFromReview = (word: string) => {
+    // Remove from saved words
+    removeSavedWord(word);
+    // Remove from current review list immediately
+    setReviewWords(prev => prev.filter(w => w.word !== word));
+    toast({
+      title: "Word removed",
+      description: `"${word}" has been removed from your saved words.`
+    });
+  };
+
   useEffect(() => {
     if (generatedWords.length > 0) {
       toast({
@@ -224,7 +235,7 @@ export default function VocabularyPage() {
                   <ReviewCard
                     key={word.word}
                     word={word}
-                    onRemove={removeSavedWord}
+                    onRemove={handleRemoveFromReview}
                   />
                 ))}
               </div>
