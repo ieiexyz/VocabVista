@@ -45,7 +45,7 @@ export default function VocabularyPage() {
 
   const handleGenerateVocabulary = () => {
     reset();
-    generateVocabulary({ level: 'B1-C1', numWords: 5 });
+    generateVocabulary({ level: 'B1-C1', numWords: 6 });
     toast({
       title: "Generating vocabulary...",
       description: "Please wait while we create new words for you."

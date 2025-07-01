@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkCheck, Check } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Check, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { VocabularyWord } from '@/hooks/use-vocabulary';
 
@@ -9,12 +9,44 @@ interface VocabularyCardProps {
 }
 
 export function VocabularyCard({ word, isSaved, onToggleSave }: VocabularyCardProps) {
+  const handlePlayPronunciation = () => {
+    // Use Web Speech API to pronounce the word
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(word.word);
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      // Try to use a US English voice
+      const voices = speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice => 
+        voice.lang.includes('en-US') || voice.lang.includes('en-GB')
+      );
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+      
+      speechSynthesis.speak(utterance);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900 mb-2">{word.word}</h3>
-          <div className="pronunciation text-gray-600 mb-3">{word.pronunciation}</div>
+          <div className="flex items-center space-x-2 mb-3">
+            <div className="pronunciation text-gray-600">{word.pronunciation}</div>
+            <Button
+              onClick={handlePlayPronunciation}
+              variant="ghost"
+              size="sm"
+              className="w-8 h-8 rounded-full p-0 bg-blue-50 text-blue-600 hover:bg-blue-100"
+              title="Play pronunciation"
+            >
+              <Volume2 size={14} />
+            </Button>
+          </div>
         </div>
         <Button
           onClick={() => onToggleSave(word)}
@@ -45,13 +77,11 @@ export function VocabularyCard({ word, isSaved, onToggleSave }: VocabularyCardPr
       <div className="mt-4 pt-4 border-t border-gray-100">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-500">Level: B2-C1</span>
-          {isSaved ? (
+          {isSaved && (
             <span className="text-green-600 font-medium flex items-center">
               <Check size={14} className="mr-1" />
               Saved
             </span>
-          ) : (
-            <span className="text-gray-400">Click bookmark to save</span>
           )}
         </div>
       </div>

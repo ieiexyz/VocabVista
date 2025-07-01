@@ -24,7 +24,7 @@ export function useVocabulary() {
     mutationFn: async (request: GenerateVocabularyRequest = {}) => {
       const response = await apiRequest('POST', '/api/vocabulary/generate', {
         level: request.level || 'B1-C1',
-        numWords: request.numWords || 5
+        numWords: request.numWords || 6
       });
       return response.json() as Promise<GenerateVocabularyResponse>;
     }

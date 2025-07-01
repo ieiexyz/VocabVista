@@ -1,4 +1,4 @@
-import { Bookmark, X } from 'lucide-react';
+import { Bookmark, X, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SavedWord } from '@/lib/storage';
 
@@ -8,12 +8,44 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ word, onRemove }: ReviewCardProps) {
+  const handlePlayPronunciation = () => {
+    // Use Web Speech API to pronounce the word
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(word.word);
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      // Try to use a US English voice
+      const voices = speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice => 
+        voice.lang.includes('en-US') || voice.lang.includes('en-GB')
+      );
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+      
+      speechSynthesis.speak(utterance);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border-2 border-green-200 p-6 card-hover">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900 mb-2">{word.word}</h3>
-          <div className="pronunciation text-gray-600 mb-3">{word.pronunciation}</div>
+          <div className="flex items-center space-x-2 mb-3">
+            <div className="pronunciation text-gray-600">{word.pronunciation}</div>
+            <Button
+              onClick={handlePlayPronunciation}
+              variant="ghost"
+              size="sm"
+              className="w-8 h-8 rounded-full p-0 bg-blue-50 text-blue-600 hover:bg-blue-100"
+              title="Play pronunciation"
+            >
+              <Volume2 size={14} />
+            </Button>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center">
