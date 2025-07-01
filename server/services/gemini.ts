@@ -25,7 +25,7 @@ export async function generateVocabulary(
     ? ` Do not include these words: ${excludeWords.join(', ')}.`
     : '';
     
-  const prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Please include at least 3 words in level B2 or C1. Please consider at least 1 words from tech-related content, so it's more tech related.${excludeWordsText}`;
+  const prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Format the output as a pure JSON array of objects. Please include at least 2 words in level B1-B2 and at least 3 words in level B2 or C1. Each object should have 'word', 'pronunciation', 'definition', and 'sentence' keys. Please consider at least 1 words from Lenny's Podcast's transcript and sentences, so it's more tech related. Do not include any extra text, explanation, or code block. Only output the JSON array.${excludeWordsText}`;
 
   try {
     const response = await ai.models.generateContent({

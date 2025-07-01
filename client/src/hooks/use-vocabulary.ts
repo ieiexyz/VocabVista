@@ -22,10 +22,14 @@ interface GenerateVocabularyResponse {
 
 export function useVocabulary() {
   const [previousWords, setPreviousWords] = useState<Set<string>>(new Set());
+  const [generationCount, setGenerationCount] = useState(0);
 
   const generateMutation = useMutation({
     mutationFn: async (request: GenerateVocabularyRequest = {}) => {
-      const excludeWords = Array.from(previousWords);
+      // Reset word history after 5 generations to allow repetition for reinforcement
+      const shouldResetHistory = generationCount >= 5;
+      const excludeWords = shouldResetHistory ? [] : Array.from(previousWords);
+      
       const response = await apiRequest('POST', '/api/vocabulary/generate', {
         level: request.level || 'B1-C1',
         numWords: request.numWords || 6,
@@ -36,13 +40,24 @@ export function useVocabulary() {
     onSuccess: (data) => {
       if (data.success && data.data) {
         const newWords = data.data.map(word => word.word.toLowerCase());
-        setPreviousWords(prev => new Set([...Array.from(prev), ...newWords]));
+        setGenerationCount(prev => {
+          const newCount = prev + 1;
+          // Reset after 5 generations
+          if (newCount >= 5) {
+            setPreviousWords(new Set(newWords));
+            return 0;
+          } else {
+            setPreviousWords(prevWords => new Set([...Array.from(prevWords), ...newWords]));
+            return newCount;
+          }
+        });
       }
     }
   });
 
   const resetWordHistory = () => {
     setPreviousWords(new Set());
+    setGenerationCount(0);
     generateMutation.reset();
   };
 
@@ -53,6 +68,7 @@ export function useVocabulary() {
     generatedWords: generateMutation.data?.data || [],
     reset: generateMutation.reset,
     resetWordHistory,
-    previousWordsCount: previousWords.size
+    previousWordsCount: previousWords.size,
+    generationCount
   };
 }
