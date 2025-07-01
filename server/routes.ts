@@ -7,9 +7,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate vocabulary endpoint
   app.post("/api/vocabulary/generate", async (req, res) => {
     try {
-      const { level, numWords } = vocabularyRequestSchema.parse(req.body);
+      const { level, numWords, excludeWords } = vocabularyRequestSchema.parse(req.body);
       
-      const vocabulary = await generateVocabulary(level, numWords);
+      const vocabulary = await generateVocabulary(level, numWords, excludeWords);
       
       res.json({
         success: true,

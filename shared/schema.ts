@@ -29,6 +29,7 @@ export const insertVocabularyWordSchema = createInsertSchema(vocabularyWords).om
 export const vocabularyRequestSchema = z.object({
   level: z.string().default("B1-C1"),
   numWords: z.number().min(1).max(20).default(10),
+  excludeWords: z.array(z.string()).optional().default([]),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

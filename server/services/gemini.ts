@@ -14,13 +14,18 @@ export interface GeneratedVocabulary {
 
 export async function generateVocabulary(
   level: string = "B1-C1", 
-  numWords: number = 10
+  numWords: number = 10,
+  excludeWords: string[] = []
 ): Promise<GeneratedVocabulary[]> {
   if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
     throw new Error("GEMINI_API_KEY or GOOGLE_API_KEY environment variable is required");
   }
 
-  const prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Please include at least 3 words in level B2 or C1. Please consider at least 1 words from tech-related content, so it's more tech related.`;
+  const excludeWordsText = excludeWords.length > 0 
+    ? ` Do not include these words: ${excludeWords.join(', ')}.`
+    : '';
+    
+  const prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Please include at least 3 words in level B2 or C1. Please consider at least 1 words from tech-related content, so it's more tech related.${excludeWordsText}`;
 
   try {
     const response = await ai.models.generateContent({
