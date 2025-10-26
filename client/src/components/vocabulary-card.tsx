@@ -10,23 +10,34 @@ interface VocabularyCardProps {
 
 export function VocabularyCard({ word, isSaved, onToggleSave }: VocabularyCardProps) {
   const handlePlayPronunciation = () => {
-    // Use Web Speech API to pronounce the word
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(word.word);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      utterance.volume = 1;
+      const speak = () => {
+        const utterance = new SpeechSynthesisUtterance(word.word);
+        utterance.rate = 0.95;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        
+        const voices = speechSynthesis.getVoices();
+        
+        const preferredVoice = voices.find(voice => 
+          (voice.lang.includes('en-US') || voice.lang.includes('en-GB')) &&
+          (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Samantha') || voice.name.includes('Daniel'))
+        );
+        
+        const fallbackVoice = voices.find(voice => 
+          voice.lang.includes('en-US') || voice.lang.includes('en-GB')
+        );
+        
+        utterance.voice = preferredVoice || fallbackVoice || null;
+        
+        speechSynthesis.speak(utterance);
+      };
       
-      // Try to use a US English voice
-      const voices = speechSynthesis.getVoices();
-      const englishVoice = voices.find(voice => 
-        voice.lang.includes('en-US') || voice.lang.includes('en-GB')
-      );
-      if (englishVoice) {
-        utterance.voice = englishVoice;
+      if (speechSynthesis.getVoices().length > 0) {
+        speak();
+      } else {
+        speechSynthesis.addEventListener('voiceschanged', speak, { once: true });
       }
-      
-      speechSynthesis.speak(utterance);
     }
   };
 
