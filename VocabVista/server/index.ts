@@ -56,13 +56,13 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  const port = Number(process.env.PORT) || 5000;
+  
   // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
   server.listen({
     port,
-    host: "0.0.0.0",
+    // 如果是開發環境就用 127.0.0.1，如果是生產環境(Zeabur)就用 0.0.0.0
+    host: process.env.NODE_ENV === "development" ? "127.0.0.1" : "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
