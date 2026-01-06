@@ -56,17 +56,17 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Zeabur / 部署環境會透過 PORT 指定埠號，本機則預設 5000
+  const port = Number(process.env.PORT) || 5000;
+  // 部署環境使用 0.0.0.0，本機開發用 127.0.0.1 即可
+  const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
   server.listen(
     {
       port,
-      host: "127.0.0.1",
+      host,
     },
     () => {
-      log(`serving on http://127.0.0.1:${port}`);
+      log(`serving on http://${host}:${port}`);
     },
   );
 })();

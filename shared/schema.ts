@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,15 +17,25 @@ export const vocabularyWords = pgTable("vocabulary_words", {
   level: text("level").notNull().default("B1-C1"),
 });
 
-export const savedWords = pgTable("saved_words", {
-  id: serial("id").primaryKey(),
-  // TODO: 將來若有正式登入系統，可改為 references(users.id)
-  anonymousId: text("anonymous_id").notNull(),
-  vocabularyWordId: integer("vocabulary_word_id").notNull(),
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: false })
-    .notNull()
-    .defaultNow(),
-});
+export const savedWords = pgTable(
+  "saved_words",
+  {
+    id: serial("id").primaryKey(),
+    // TODO: 將來若有正式登入系統，可改為 references(users.id)
+    anonymousId: text("anonymous_id").notNull(),
+    vocabularyWordId: integer("vocabulary_word_id").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: false })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    // 同一個使用者對同一個單字只會有一筆收藏紀錄
+    uniqueSavedWordPerUser: uniqueIndex("saved_words_anonymous_word_unique").on(
+      table.anonymousId,
+      table.vocabularyWordId,
+    ),
+  }),
+);
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

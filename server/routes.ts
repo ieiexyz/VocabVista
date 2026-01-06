@@ -87,12 +87,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const payload = insertSavedWordSchema.parse(req.body);
 
+      // 若已存在相同 anonymousId + vocabularyWordId，就不要重複插入
       const [inserted] = await db
         .insert(savedWords)
         .values(payload)
+        .onConflictDoNothing()
         .returning();
 
-      res.status(201).json({ success: true, data: inserted });
+      res.status(201).json({
+        success: true,
+        data: inserted ?? null,
+      });
     } catch (error) {
       console.error("Error inserting saved word:", error);
       res.status(500).json({

@@ -51,6 +51,11 @@ export function useSavedWords() {
   }, []);
 
   const saveWord = (word: Omit<SavedWord, 'savedAt'>) => {
+    // 前端再檢查一次，避免同一個字被重複加入清單
+    if (savedWords.some((w) => w.word.toLowerCase() === word.word.toLowerCase())) {
+      return;
+    }
+
     // 先更新 localStorage 作為即時回饋
     storage.saveWord(word);
     setSavedWords(storage.getSavedWords());
