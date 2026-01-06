@@ -1,15 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
-import type { VocabularyWord } from "@shared/schema";
+import type { InsertVocabularyWord } from "@shared/schema";
 
 const ai = new GoogleGenAI({ 
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "" 
 });
 
 export interface GeneratedVocabulary {
+  // 和 InsertVocabularyWord 對應，但不含 id
   word: string;
   pronunciation: string;
   definition: string;
   sentence: string;
+  level?: string;
 }
 
 export async function generateVocabulary(
@@ -76,7 +78,8 @@ export async function generateVocabulary(
       word: item.word || 'N/A',
       pronunciation: item.pronunciation || 'N/A',
       definition: item.definition || 'N/A',
-      sentence: item.sentence || 'N/A'
+      sentence: item.sentence || 'N/A',
+      level,
     }));
 
   } catch (error) {

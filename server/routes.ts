@@ -10,6 +10,7 @@ import {
   insertSavedWordSchema,
   savedWordsQuerySchema,
   vocabularyWords,
+  type InsertVocabularyWord,
 } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
 
@@ -18,12 +19,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/vocabulary/generate", async (req, res) => {
     try {
       const { level, numWords, excludeWords } = vocabularyRequestSchema.parse(req.body);
-      
       const vocabulary = await generateVocabulary(level, numWords, excludeWords);
-      
+
+      // 將產生的單字寫入資料庫，並回傳含 id 的結果
+      const rowsToInsert: InsertVocabularyWord[] = vocabulary.map((v) => ({
+        word: v.word,
+        pronunciation: v.pronunciation,
+        definition: v.definition,
+        sentence: v.sentence,
+        level: v.level ?? level,
+      }));
+
+      const inserted = await db
+        .insert(vocabularyWords)
+        .values(rowsToInsert)
+        .returning();
+
       res.json({
         success: true,
-        data: vocabulary
+        data: inserted,
       });
     } catch (error) {
       console.error("Error in vocabulary generation:", error);

@@ -3,10 +3,12 @@ import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
 
 export interface VocabularyWord {
+  id: number;
   word: string;
   pronunciation: string;
   definition: string;
   sentence: string;
+  level: string;
 }
 
 interface GenerateVocabularyRequest {
