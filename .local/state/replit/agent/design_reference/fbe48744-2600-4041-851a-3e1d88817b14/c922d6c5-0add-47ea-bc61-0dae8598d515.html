@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster - Advanced English Vocabulary Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'inter': ['Inter', 'sans-serif'],
+                },
+                colors: {
+                    primary: '#1976D2',
+                    secondary: '#FF9800',
+                    success: '#4CAF50',
+                    danger: '#F44336',
+                    warning: '#FFC107',
+                    info: '#2196F3'
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        .card-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .toast {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .pronunciation {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-book-open text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">VocabMaster</h1>
+                        <p class="text-sm text-gray-500">Advanced English Learning</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="hidden sm:flex items-center space-x-2 bg-gray-100 px-3 py-1.5 rounded-full">
+                        <i class="fas fa-bookmark text-success text-sm"></i>
+                        <span class="text-sm font-medium text-gray-700">Saved: <span id="saved-count">0</span></span>
+                    </div>
+                    
+                    <button id="toggle-mode" class="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-eye text-sm"></i>
+                        <span class="hidden sm:inline">Review Mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Learning Mode -->
+        <div id="learning-mode" class="space-y-8">
+            <!-- Action Bar -->
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm">
+                <div class="text-center sm:text-left">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Expand Your Vocabulary</h2>
+                    <p class="text-gray-600">Generate advanced English words with pronunciations and example sentences</p>
+                </div>
+                <div class="flex gap-3">
+                    <button id="generate-btn" class="flex items-center space-x-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <i class="fas fa-magic text-sm"></i>
+                        <span>Generate Words</span>
+                    </button>
+                    <button id="clear-saved-btn" class="flex items-center space-x-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        <i class="fas fa-trash text-sm"></i>
+                        <span class="hidden sm:inline">Clear Saved</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="hidden">
+                <div class="flex items-center justify-center py-12">
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full loading-spinner"></div>
+                        <p class="text-gray-600 font-medium">Generating vocabulary words...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vocabulary Grid -->
+            <div id="vocabulary-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Vocabulary cards will be inserted here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-book-open text-3xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Ready to Learn?</h3>
+                <p class="text-gray-600 mb-6">Click "Generate Words" to get started with advanced vocabulary</p>
+                <button onclick="document.getElementById('generate-btn').click()" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    <i class="fas fa-play mr-2"></i>Get Started
+                </button>
+            </div>
+        </div>
+
+        <!-- Review Mode -->
+        <div id="review-mode" class="hidden space-y-8">
+            <!-- Review Header -->
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Review Saved Words</h2>
+                        <p class="text-gray-600">Practice vocabulary you've saved for later</p>
+                    </div>
+                    <button id="review-random-btn" class="flex items-center space-x-2 px-6 py-3 bg-success text-white rounded-lg hover:bg-green-600 transition-colors font-medium">
+                        <i class="fas fa-random text-sm"></i>
+                        <span>Random Review</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                    <span class="flex items-center space-x-1">
+                        <i class="fas fa-bookmark text-success"></i>
+                        <span>Total Saved: <span id="review-count">0</span></span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Review Grid -->
+            <div id="review-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Review cards will be inserted here -->
+            </div>
+
+            <!-- Review Empty State -->
+            <div id="review-empty-state" class="text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-bookmark text-3xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">No Saved Words Yet</h3>
+                <p class="text-gray-600 mb-6">Save words from the learning mode to review them here</p>
+                <button onclick="switchMode('learning')" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Learning
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 m-4 max-w-md w-full">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Clear All Saved Words?</h3>
+                    <p class="text-gray-600">This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="flex space-x-3 justify-end">
+                <button id="confirm-cancel" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== APPLICATION STATE =====
+        let currentVocabulary = [];
+        let savedWords = JSON.parse(localStorage.getItem('savedWords') || '[]');
+        let currentMode = 'learning';
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSavedCount();
+            updateUI();
+            
+            // Event listeners
+            document.getElementById('generate-btn').addEventListener('click', generateVocabulary);
+            document.getElementById('toggle-mode').addEventListener('click', toggleMode);
+            document.getElementById('clear-saved-btn').addEventListener('click', showClearConfirmation);
+            document.getElementById('review-random-btn').addEventListener('click', reviewRandomWords);
+            document.getElementById('confirm-cancel').addEventListener('click', hideClearConfirmation);
+            document.getElementById('confirm-delete').addEventListener('click', clearAllSavedWords);
+        });
+
+        // ===== VOCABULARY GENERATION =====
+        async function generateVocabulary() {
+            showLoading(true);
+            showToast('Generating vocabulary...', 'info');
+            
+            try {
+                // TODO: Replace with actual API call to Gemini
+                // For now, using mock data that matches the Python code structure
+                const mockVocabulary = [
+                    {
+                        word: "Paradigm",
+                        pronunciation: "/ˈpærəˌdaɪm/",
+                        definition: "A typical example or pattern of something; a model or framework for understanding.",
+                        sentence: "The startup's innovative approach represents a new paradigm in software development."
+                    },
+                    {
+                        word: "Scalability",
+                        pronunciation: "/ˌskeɪləˈbɪləti/",
+                        definition: "The capacity to be changed in size or scale; ability to handle increased workload.",
+                        sentence: "The platform's scalability allows it to support millions of concurrent users."
+                    },
+                    {
+                        word: "Ubiquitous",
+                        pronunciation: "/juːˈbɪkwɪtəs/",
+                        definition: "Present, appearing, or found everywhere; omnipresent.",
+                        sentence: "Smartphones have become ubiquitous in modern society, fundamentally changing how we communicate."
+                    },
+                    {
+                        word: "Disruptive",
+                        pronunciation: "/dɪsˈrʌptɪv/",
+                        definition: "Innovative or groundbreaking in a way that causes radical change to existing practices.",
+                        sentence: "Artificial intelligence is proving to be a disruptive technology across multiple industries."
+                    },
+                    {
+                        word: "Resilience",
+                        pronunciation: "/rɪˈzɪliəns/",
+                        definition: "The ability to recover quickly from difficulties; mental or emotional strength.",
+                        sentence: "Building resilience in distributed systems requires careful consideration of failure modes and recovery strategies."
+                    }
+                ];
+
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                currentVocabulary = mockVocabulary;
+                displayVocabulary(currentVocabulary);
+                showToast('Vocabulary generated successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error generating vocabulary:', error);
+                showToast('Failed to generate vocabulary. Please try again.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ===== UI DISPLAY FUNCTIONS =====
+        function displayVocabulary(vocabulary) {
+            const grid = document.getElementById('vocabulary-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (vocabulary.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.classList.remove('hidden');
+            
+            grid.innerHTML = vocabulary.map(word => createVocabularyCard(word)).join('');
+        }
+
+        function createVocabularyCard(word) {
+            const isSaved = savedWords.some(saved => saved.word === word.word);
+            
+            return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover" data-word="${word.word}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${word.word}</h3>
+                            <div class="pronunciation text-gray-600 mb-3">${word.pronunciation}</div>
+                        </div>
+                        <button onclick="toggleSaveWord('${word.word}')" 
+                                class="save-btn flex items-center justify-center w-10 h-10 rounded-full transition-colors ${isSaved ? 'bg-success text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}">
+                            <i class="fas fa-bookmark text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Definition</h4>
+                            <p class="text-gray-600 leading-relaxed">${word.definition}</p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Example</h4>
+                            <p class="text-gray-600 leading-relaxed italic">"${word.sentence}"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-500">Level: B2-C1</span>
+                            ${isSaved ? '<span class="text-success font-medium"><i class="fas fa-check mr-1"></i>Saved</span>' : '<span class="text-gray-400">Click bookmark to save</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===== SAVE/REVIEW FUNCTIONALITY =====
+        function toggleSaveWord(wordText) {
+            const word = currentVocabulary.find(w => w.word === wordText) || 
+                        savedWords.find(w => w.word === wordText);
+            
+            if (!word) return;
+
+            const existingIndex = savedWords.findIndex(saved => saved.word === word.word);
+            
+            if (existingIndex > -1) {
+                savedWords.splice(existingIndex, 1);
+                showToast(`"${word.word}" removed from saved words`, 'info');
+            } else {
+                savedWords.push(word);
+                showToast(`"${word.word}" saved for later review!`, 'success');
+            }
+            
+            localStorage.setItem('savedWords', JSON.stringify(savedWords));
+            updateSavedCount();
+            updateUI();
+        }
+
+        function reviewRandomWords() {
+            if (savedWords.length === 0) {
+                showToast('No saved words to review', 'warning');
+                return;
+            }
+
+            const numToReview = Math.min(3, savedWords.length);
+            const randomWords = [...savedWords].sort(() => 0.5 - Math.random()).slice(0, numToReview);
+            
+            displayReviewWords(randomWords);
+            showToast(`Reviewing ${numToReview} random words`, 'info');
+        }
+
+        function displayReviewWords(words) {
+            const grid = document.getElementById('review-grid');
+            const emptyState = document.getElementById('review-empty-state');
+            
+            if (words.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            grid.innerHTML = words.map(word => createReviewCard(word)).join('');
+        }
+
+        function createReviewCard(word) {
+            return `
+                <div class="bg-white rounded-xl shadow-sm border-2 border-success/20 p-6 card-hover">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${word.word}</h3>
+                            <div class="pronunciation text-gray-600 mb-3">${word.pronunciation}</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-success/10 text-success px-2 py-1 rounded-full text-xs font-medium">
+                                <i class="fas fa-bookmark mr-1"></i>Saved
+                            </span>
+                            <button onclick="toggleSaveWord('${word.word}')" 
+                                    class="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center">
+                                <i class="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Definition</h4>
+                            <p class="text-gray-600 leading-relaxed">${word.definition}</p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Example</h4>
+                            <p class="text-gray-600 leading-relaxed italic">"${word.sentence}"</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===== MODE SWITCHING =====
+        function toggleMode() {
+            switchMode(currentMode === 'learning' ? 'review' : 'learning');
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            const learningMode = document.getElementById('learning-mode');
+            const reviewMode = document.getElementById('review-mode');
+            const toggleBtn = document.getElementById('toggle-mode');
+            
+            if (mode === 'review') {
+                learningMode.classList.add('hidden');
+                reviewMode.classList.remove('hidden');
+                toggleBtn.innerHTML = '<i class="fas fa-book text-sm"></i><span class="hidden sm:inline">Learning Mode</span>';
+                displayAllSavedWords();
+            } else {
+                reviewMode.classList.add('hidden');
+                learningMode.classList.remove('hidden');
+                toggleBtn.innerHTML = '<i class="fas fa-eye text-sm"></i><span class="hidden sm:inline">Review Mode</span>';
+            }
+        }
+
+        function displayAllSavedWords() {
+            displayReviewWords(savedWords);
+            document.getElementById('review-count').textContent = savedWords.length;
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function updateSavedCount() {
+            document.getElementById('saved-count').textContent = savedWords.length;
+        }
+
+        function updateUI() {
+            if (currentMode === 'learning') {
+                displayVocabulary(currentVocabulary);
+            } else {
+                displayAllSavedWords();
+            }
+        }
+
+        function showLoading(show) {
+            const loadingState = document.getElementById('loading-state');
+            const vocabularyGrid = document.getElementById('vocabulary-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (show) {
+                loadingState.classList.remove('hidden');
+                vocabularyGrid.classList.add('hidden');
+                emptyState.classList.add('hidden');
+            } else {
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 max-w-sm`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]}"></i>
+                <span class="flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-2 hover:bg-white/20 rounded p-1">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 4000);
+        }
+
+        // ===== CLEAR SAVED WORDS =====
+        function showClearConfirmation() {
+            if (savedWords.length === 0) {
+                showToast('No saved words to clear', 'info');
+                return;
+            }
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function hideClearConfirmation() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function clearAllSavedWords() {
+            savedWords = [];
+            localStorage.setItem('savedWords', JSON.stringify(savedWords));
+            updateSavedCount();
+            updateUI();
+            hideClearConfirmation();
+            showToast('All saved words cleared', 'success');
+        }
+    </script>
+</body>
+</html>

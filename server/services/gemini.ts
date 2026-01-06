@@ -24,8 +24,14 @@ export async function generateVocabulary(
   const excludeWordsText = excludeWords.length > 0 
     ? ` Do not include these words: ${excludeWords.join(', ')}.`
     : '';
+  
+  // Dynamically adjust requirements based on numWords to avoid unsatisfiable constraints
+  // When numWords is 6, total minimum requirements must not exceed 6
+  const lennyCount = numWords >= 10 ? 3 : numWords >= 6 ? 2 : 1;
+  const b1b2Count = numWords >= 8 ? 2 : 1;
+  const b2c1Count = numWords >= 8 ? 3 : numWords >= 6 ? 2 : 1;
     
-  const prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Format the output as a pure JSON array of objects. Please include at least 2 words in level B1-B2 and at least 3 words in level B2 or C1. Each object should have 'word', 'pronunciation', 'definition', and 'sentence' keys. Please consider at least 1 words from Lenny's Podcast's transcript and sentences, so it's more tech related. Do not include any extra text, explanation, or code block. Only output the JSON array.${excludeWordsText}`;
+  const prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Format the output as a pure JSON array of objects. Please include at least ${b1b2Count} word${b1b2Count > 1 ? 's' : ''} in level B1-B2 and at least ${b2c1Count} word${b2c1Count > 1 ? 's' : ''} in level B2 or C1. Each object should have 'word', 'pronunciation', 'definition', and 'sentence' keys. Please consider at least ${lennyCount} word${lennyCount > 1 ? 's' : ''} from Lenny's Podcast's transcript and sentences, so it's more tech related. Do not include any extra text, explanation, or code block. Only output the JSON array.${excludeWordsText}`;
 
   try {
     const response = await ai.models.generateContent({
