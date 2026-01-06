@@ -6,9 +6,20 @@ export interface SavedWord {
   savedAt: string;
 }
 
+const ANONYMOUS_ID_KEY = 'vocabmaster_anonymous_id';
+
 const SAVED_WORDS_KEY = 'vocabmaster_saved_words';
 
 export const storage = {
+  getAnonymousId(): string {
+    if (typeof window === 'undefined') return '';
+    let id = localStorage.getItem(ANONYMOUS_ID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(ANONYMOUS_ID_KEY, id);
+    }
+    return id;
+  },
   getSavedWords(): SavedWord[] {
     try {
       const saved = localStorage.getItem(SAVED_WORDS_KEY);
