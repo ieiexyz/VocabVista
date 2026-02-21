@@ -1,4 +1,5 @@
 export interface SavedWord {
+  id: number;
   word: string;
   pronunciation: string;
   definition: string;

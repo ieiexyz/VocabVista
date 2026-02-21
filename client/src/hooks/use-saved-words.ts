@@ -64,15 +64,39 @@ export function useSavedWords() {
     const anonymousId = storage.getAnonymousId();
     void apiRequest('POST', '/api/saved-words', {
       anonymousId,
-      vocabularyWordId: word.id, // 需要來自 VocabularyWord 的 id，呼叫方需提供
+      vocabularyWordId: word.id,
     }).catch((e) => {
       console.error('Failed to sync saved word to server', e);
     });
   };
 
   const removeSavedWord = (word: string) => {
+    const target = savedWords.find((w) => w.word === word);
     storage.removeSavedWord(word);
     setSavedWords(storage.getSavedWords());
+
+    if (target) {
+      const anonymousId = storage.getAnonymousId();
+      // 先從 saved_words 找出對應的 row id 再刪除
+      void apiRequest(
+        'GET',
+        `/api/saved-words?anonymousId=${encodeURIComponent(anonymousId)}`
+      )
+        .then((res) => res.json())
+        .then((json) => {
+          if (json?.success && Array.isArray(json.data)) {
+            const row = json.data.find((r: any) => r.word === word);
+            if (row) {
+              void apiRequest('DELETE', `/api/saved-words/${row.id}`).catch((e) => {
+                console.error('Failed to delete saved word from server', e);
+              });
+            }
+          }
+        })
+        .catch((e) => {
+          console.error('Failed to fetch saved words for deletion', e);
+        });
+    }
   };
 
   const isWordSaved = (word: string) => {
