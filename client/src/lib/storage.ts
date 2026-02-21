@@ -32,11 +32,13 @@ export const storage = {
 
   saveWord(word: Omit<SavedWord, 'savedAt'>): void {
     const savedWords = this.getSavedWords();
-    const existingIndex = savedWords.findIndex(w => w.word === word.word);
-    
+    const normalized = word.word.charAt(0).toLowerCase() + word.word.slice(1);
+    const existingIndex = savedWords.findIndex(w => w.word.toLowerCase() === normalized.toLowerCase());
+
     if (existingIndex === -1) {
       savedWords.push({
         ...word,
+        word: normalized,
         savedAt: new Date().toISOString()
       });
       localStorage.setItem(SAVED_WORDS_KEY, JSON.stringify(savedWords));
@@ -45,12 +47,12 @@ export const storage = {
 
   removeSavedWord(word: string): void {
     const savedWords = this.getSavedWords();
-    const filtered = savedWords.filter(w => w.word !== word);
+    const filtered = savedWords.filter(w => w.word.toLowerCase() !== word.toLowerCase());
     localStorage.setItem(SAVED_WORDS_KEY, JSON.stringify(filtered));
   },
 
   isWordSaved(word: string): boolean {
-    return this.getSavedWords().some(w => w.word === word);
+    return this.getSavedWords().some(w => w.word.toLowerCase() === word.toLowerCase());
   },
 
   clearAllSavedWords(): void {

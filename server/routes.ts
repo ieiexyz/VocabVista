@@ -38,8 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vocabulary = await generateVocabulary(level, numWords, mergedExcludeWords);
 
       // 將產生的單字寫入資料庫，並回傳含 id 的結果
+      const normalizeWord = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
       const rowsToInsert: InsertVocabularyWord[] = vocabulary.map((v) => ({
-        word: v.word,
+        word: normalizeWord(v.word),
         pronunciation: v.pronunciation,
         definition: v.definition,
         sentence: v.sentence,
