@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { storage } from '@/lib/storage';
 import { useState } from 'react';
 
 export interface VocabularyWord {
@@ -35,7 +36,8 @@ export function useVocabulary() {
       const response = await apiRequest('POST', '/api/vocabulary/generate', {
         level: request.level || 'B1-C1',
         numWords: request.numWords || 6,
-        excludeWords
+        excludeWords,
+        anonymousId: storage.getAnonymousId(),
       });
       return response.json() as Promise<GenerateVocabularyResponse>;
     },

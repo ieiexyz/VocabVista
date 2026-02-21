@@ -50,6 +50,7 @@ export const vocabularyRequestSchema = z.object({
   level: z.string().default("B1-C1"),
   numWords: z.number().min(1).max(20).default(10),
   excludeWords: z.array(z.string()).optional().default([]),
+  anonymousId: z.string().optional(),
 });
 
 export const insertSavedWordSchema = createInsertSchema(savedWords).omit({

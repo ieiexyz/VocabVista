@@ -18,8 +18,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate vocabulary endpoint
   app.post("/api/vocabulary/generate", async (req, res) => {
     try {
-      const { level, numWords, excludeWords } = vocabularyRequestSchema.parse(req.body);
-      const vocabulary = await generateVocabulary(level, numWords, excludeWords);
+      const { level, numWords, excludeWords, anonymousId } = vocabularyRequestSchema.parse(req.body);
+      let mergedExcludeWords = [...(excludeWords ?? [])];
+      if (anonymousId) {
+        const saved = await db
+          .select({ word: vocabularyWords.word })
+          .from(savedWords)
+          .innerJoin(vocabularyWords, eq(savedWords.vocabularyWordId, vocabularyWords.id))
+          .where(eq(savedWords.anonymousId, anonymousId));
+        const savedWordStrings = saved.map((r) => r.word);
+        const excludeSet = new Set(mergedExcludeWords.map((w) => w.toLowerCase()));
+        for (const w of savedWordStrings) {
+          if (!excludeSet.has(w.toLowerCase())) {
+            excludeSet.add(w.toLowerCase());
+            mergedExcludeWords.push(w);
+          }
+        }
+      }
+      const vocabulary = await generateVocabulary(level, numWords, mergedExcludeWords);
 
       // 將產生的單字寫入資料庫，並回傳含 id 的結果
       const rowsToInsert: InsertVocabularyWord[] = vocabulary.map((v) => ({
