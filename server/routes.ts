@@ -12,7 +12,7 @@ import {
   vocabularyWords,
   type InsertVocabularyWord,
 } from "@shared/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // 暫時診斷用：確認 DB 連線與環境變數
@@ -66,14 +66,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         level: v.level ?? level,
       }));
 
-      const inserted = await db
+      // insert 新單字，若 word 已存在（unique constraint）則略過
+      await db
         .insert(vocabularyWords)
         .values(rowsToInsert)
-        .returning();
+        .onConflictDoNothing();
+
+      // 無論是新 insert 或已存在，都撈出這批 word 的完整資料回傳
+      const wordStrings = rowsToInsert.map((r) => r.word);
+      const result = await db
+        .select()
+        .from(vocabularyWords)
+        .where(inArray(vocabularyWords.word, wordStrings));
 
       res.json({
         success: true,
-        data: inserted,
+        data: result,
       });
     } catch (error) {
       console.error("Error in vocabulary generation:", error);

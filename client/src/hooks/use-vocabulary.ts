@@ -23,9 +23,33 @@ interface GenerateVocabularyResponse {
   error?: string;
 }
 
+const PREVIOUS_WORDS_KEY = 'vocabmaster_previous_words';
+const GENERATION_COUNT_KEY = 'vocabmaster_generation_count';
+
+function loadPreviousWords(): Set<string> {
+  try {
+    const raw = localStorage.getItem(PREVIOUS_WORDS_KEY);
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function savePreviousWords(words: Set<string>): void {
+  localStorage.setItem(PREVIOUS_WORDS_KEY, JSON.stringify(Array.from(words)));
+}
+
+function loadGenerationCount(): number {
+  try {
+    return Number(localStorage.getItem(GENERATION_COUNT_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function useVocabulary() {
-  const [previousWords, setPreviousWords] = useState<Set<string>>(new Set());
-  const [generationCount, setGenerationCount] = useState(0);
+  const [previousWords, setPreviousWords] = useState<Set<string>>(loadPreviousWords);
+  const [generationCount, setGenerationCount] = useState<number>(loadGenerationCount);
 
   const generateMutation = useMutation({
     mutationFn: async (request: GenerateVocabularyRequest = {}) => {
@@ -48,10 +72,18 @@ export function useVocabulary() {
           const newCount = prev + 1;
           // Reset after 5 generations
           if (newCount >= 5) {
-            setPreviousWords(new Set(newWords));
+            const next = new Set(newWords);
+            setPreviousWords(next);
+            savePreviousWords(next);
+            localStorage.setItem(GENERATION_COUNT_KEY, '0');
             return 0;
           } else {
-            setPreviousWords(prevWords => new Set([...Array.from(prevWords), ...newWords]));
+            setPreviousWords(prevWords => {
+              const next = new Set([...Array.from(prevWords), ...newWords]);
+              savePreviousWords(next);
+              return next;
+            });
+            localStorage.setItem(GENERATION_COUNT_KEY, String(newCount));
             return newCount;
           }
         });
@@ -62,6 +94,8 @@ export function useVocabulary() {
   const resetWordHistory = () => {
     setPreviousWords(new Set());
     setGenerationCount(0);
+    localStorage.removeItem(PREVIOUS_WORDS_KEY);
+    localStorage.removeItem(GENERATION_COUNT_KEY);
     generateMutation.reset();
   };
 

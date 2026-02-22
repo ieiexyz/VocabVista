@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,14 +8,20 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
-export const vocabularyWords = pgTable("vocabulary_words", {
-  id: serial("id").primaryKey(),
-  word: text("word").notNull(),
-  pronunciation: text("pronunciation").notNull(),
-  definition: text("definition").notNull(),
-  sentence: text("sentence").notNull(),
-  level: text("level").notNull().default("B1-C1"),
-});
+export const vocabularyWords = pgTable(
+  "vocabulary_words",
+  {
+    id: serial("id").primaryKey(),
+    word: text("word").notNull(),
+    pronunciation: text("pronunciation").notNull(),
+    definition: text("definition").notNull(),
+    sentence: text("sentence").notNull(),
+    level: text("level").notNull().default("B1-C1"),
+  },
+  (table) => ({
+    uniqueWord: uniqueIndex("vocabulary_words_word_unique").on(table.word),
+  }),
+);
 
 export const savedWords = pgTable(
   "saved_words",
