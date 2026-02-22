@@ -81,8 +81,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       // 找出被 onConflictDoNothing 略過（已存在於 DB）的單字，只補查這些
+      // 同時排除已儲存的單字，避免已儲存單字出現在新產生的列表中
       const insertedWordSet = new Set(inserted.map((r) => r.word.toLowerCase()));
-      const skippedWords = wordStrings.filter((w) => !insertedWordSet.has(w.toLowerCase()));
+      const skippedWords = wordStrings.filter(
+        (w) => !insertedWordSet.has(w.toLowerCase()) && !excludeSetFinal.has(w.toLowerCase())
+      );
       const existing = skippedWords.length > 0
         ? await db.select().from(vocabularyWords).where(inArray(vocabularyWords.word, skippedWords))
         : [];
