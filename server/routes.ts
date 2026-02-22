@@ -35,10 +35,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      const vocabulary = await generateVocabulary(level, numWords, mergedExcludeWords);
+      const vocabularyRaw = await generateVocabulary(level, numWords, mergedExcludeWords);
 
-      // 將產生的單字寫入資料庫，並回傳含 id 的結果
+      // 無論 AI 是否遵守，強制過濾掉已儲存 / 已出現過的單字
       const normalizeWord = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
+      const excludeSetFinal = new Set(mergedExcludeWords.map((w) => w.toLowerCase()));
+      const vocabulary = vocabularyRaw.filter(
+        (v) => !excludeSetFinal.has(normalizeWord(v.word).toLowerCase())
+      );
       const rowsToInsert: InsertVocabularyWord[] = vocabulary.map((v) => ({
         word: normalizeWord(v.word),
         pronunciation: v.pronunciation,
