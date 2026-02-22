@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,7 +20,7 @@ export const vocabularyWords = pgTable(
     level: text("level").notNull().default("B1-C1"),
   },
   (table) => ({
-    uniqueWord: uniqueIndex("vocabulary_words_word_unique").on(table.word),
+    uniqueWord: uniqueIndex("vocabulary_words_word_unique").on(sql`lower(${table.word})`),
   }),
 );
 
