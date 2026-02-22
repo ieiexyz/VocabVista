@@ -93,7 +93,7 @@ Output format: JSON object with single key "words", value an array of objects ea
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-04-17",
+      model: "gemini-2.5-flash",
       config: {
         responseMimeType: "application/json",
         responseSchema: {
