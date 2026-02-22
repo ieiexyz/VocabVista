@@ -41,6 +41,8 @@ export const savedWords = pgTable(
       table.anonymousId,
       table.vocabularyWordId,
     ),
+    // 加速以 anonymousId 查詢已儲存單字
+    anonymousIdIdx: index("saved_words_anonymous_id_idx").on(table.anonymousId),
   }),
 );
 

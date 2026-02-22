@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Wand2, Trash2, Shuffle, BookOpen, Bookmark, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { VocabularyCard } from '@/components/vocabulary-card';
@@ -166,13 +167,25 @@ export default function VocabularyPage() {
               </div>
             </div>
 
-            {/* Loading State */}
+            {/* Loading State - Skeleton Cards */}
             {isGenerating && (
-              <div className="flex items-center justify-center py-12">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full loading-spinner"></div>
-                  <p className="text-gray-600 font-medium">Generating vocabulary words...</p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                      <Skeleton className="h-9 w-9 rounded-full" />
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/6" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                ))}
               </div>
             )}
 

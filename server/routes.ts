@@ -72,18 +72,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         level: v.level ?? level,
       }));
 
-      // insert 新單字，若 word 已存在（unique constraint）則略過
-      await db
+      // insert 新單字，若 word 已存在（unique constraint）則略過，直接用 returning 取得新插入的資料
+      const wordStrings = rowsToInsert.map((r) => r.word);
+      const inserted = await db
         .insert(vocabularyWords)
         .values(rowsToInsert)
-        .onConflictDoNothing();
+        .onConflictDoNothing()
+        .returning();
 
-      // 無論是新 insert 或已存在，都撈出這批 word 的完整資料回傳
-      const wordStrings = rowsToInsert.map((r) => r.word);
-      const result = await db
-        .select()
-        .from(vocabularyWords)
-        .where(inArray(vocabularyWords.word, wordStrings));
+      // 找出被 onConflictDoNothing 略過（已存在於 DB）的單字，只補查這些
+      const insertedWordSet = new Set(inserted.map((r) => r.word.toLowerCase()));
+      const skippedWords = wordStrings.filter((w) => !insertedWordSet.has(w.toLowerCase()));
+      const existing = skippedWords.length > 0
+        ? await db.select().from(vocabularyWords).where(inArray(vocabularyWords.word, skippedWords))
+        : [];
+
+      const result = [...inserted, ...existing];
 
       res.json({
         success: true,
