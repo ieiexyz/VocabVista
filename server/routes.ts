@@ -15,6 +15,20 @@ import {
 import { and, eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // 暫時診斷用：確認 DB 連線與環境變數
+  app.get("/api/debug/db", async (_req, res) => {
+    try {
+      const result = await db.execute("SELECT COUNT(*) as cnt FROM vocabulary_words");
+      res.json({
+        ok: true,
+        dbUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.slice(0, 40) + "..." : "NOT SET",
+        vocabularyWordsCount: result.rows[0],
+      });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: String(e) });
+    }
+  });
+
   // Generate vocabulary endpoint
   app.post("/api/vocabulary/generate", async (req, res) => {
     try {
