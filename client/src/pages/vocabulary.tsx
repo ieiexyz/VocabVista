@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Wand2, Trash2, Shuffle, BookOpen, Bookmark, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { VocabularyCard } from '@/components/vocabulary-card';
@@ -10,11 +11,28 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useVocabulary } from '@/hooks/use-vocabulary';
 import { useSavedWords } from '@/hooks/use-saved-words';
 
+const TOPICS = [
+  { id: "lenny",     label: "軟體管理趨勢" },
+  { id: "workplace", label: "日常職場" },
+  { id: "taiwan",    label: "台灣歷史與政治" },
+  { id: "travel",    label: "旅遊與美食" },
+  { id: "daily",     label: "生活需求與閒聊" },
+];
+
 export default function VocabularyPage() {
   const [currentMode, setCurrentMode] = useState<'learning' | 'review'>('learning');
   const [showClearModal, setShowClearModal] = useState(false);
   const [reviewWords, setReviewWords] = useState<any[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(["lenny"]);
   const { toast } = useToast();
+
+  const toggleTopic = (id: string) => {
+    setSelectedTopics(prev =>
+      prev.includes(id)
+        ? prev.length > 1 ? prev.filter(t => t !== id) : prev
+        : [...prev, id]
+    );
+  };
 
   const {
     generateVocabulary,
@@ -46,7 +64,7 @@ export default function VocabularyPage() {
 
   const handleGenerateVocabulary = () => {
     reset();
-    generateVocabulary({ level: 'B1-C1', numWords: 6 });
+    generateVocabulary({ level: 'B1-C1', numWords: 6, topics: selectedTopics });
     toast({
       title: "Generating vocabulary...",
       description: "Please wait while we create new words for you."
@@ -150,20 +168,42 @@ export default function VocabularyPage() {
         {currentMode === 'learning' ? (
           <div className="space-y-8">
             {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-6 rounded-xl shadow-sm">
-              <div className="text-center sm:text-left">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Expand Your Vocabulary</h2>
-                <p className="text-gray-600">Generate advanced English words with pronunciations and example sentences</p>
+            <div className="bg-white p-6 rounded-xl shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="text-center sm:text-left">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Expand Your Vocabulary</h2>
+                  <p className="text-gray-600">Generate advanced English words with pronunciations and example sentences</p>
+                </div>
+                <div className="flex gap-3 shrink-0">
+                  <Button onClick={handleGenerateVocabulary} disabled={isGenerating} className="bg-primary hover:bg-blue-700">
+                    <Wand2 size={16} className="mr-2" />
+                    {isGenerating ? 'Generating...' : 'Generate Words'}
+                  </Button>
+                  <Button onClick={handleClearSaved} variant="outline" className="text-gray-700">
+                    <Trash2 size={16} className="mr-2" />
+                    <span className="hidden sm:inline">Clear Saved</span>
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-3">
-                <Button onClick={handleGenerateVocabulary} disabled={isGenerating} className="bg-primary hover:bg-blue-700">
-                  <Wand2 size={16} className="mr-2" />
-                  {isGenerating ? 'Generating...' : 'Generate Words'}
-                </Button>
-                <Button onClick={handleClearSaved} variant="outline" className="text-gray-700">
-                  <Trash2 size={16} className="mr-2" />
-                  <span className="hidden sm:inline">Clear Saved</span>
-                </Button>
+              {/* Topic Selector */}
+              <div>
+                <p className="text-sm text-gray-500 mb-2">選擇單字主題（可多選）</p>
+                <div className="flex flex-wrap gap-2">
+                  {TOPICS.map(topic => (
+                    <button
+                      key={topic.id}
+                      onClick={() => toggleTopic(topic.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-colors",
+                        selectedTopics.includes(topic.id)
+                          ? "bg-primary text-white border-primary"
+                          : "bg-white text-gray-600 border-gray-300 hover:border-primary hover:text-primary"
+                      )}
+                    >
+                      {topic.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -15,6 +15,7 @@ export interface VocabularyWord {
 interface GenerateVocabularyRequest {
   level?: string;
   numWords?: number;
+  topics?: string[];
 }
 
 interface GenerateVocabularyResponse {
@@ -62,6 +63,7 @@ export function useVocabulary() {
         numWords: request.numWords || 6,
         excludeWords,
         anonymousId: storage.getAnonymousId(),
+        topics: request.topics ?? ["lenny"],
       });
       return response.json() as Promise<GenerateVocabularyResponse>;
     },

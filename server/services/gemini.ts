@@ -74,10 +74,19 @@ function sampleFromLenny(count: number, excludeWords: string[]): LennyVocabulary
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+const TOPIC_PROMPTS: Record<string, string> = {
+  lenny:     "tech, product management, startups, SaaS, growth hacking, engineering culture (inspired by Lenny's Podcast)",
+  workplace: "professional workplace communication, meetings, emails, team collaboration, business English",
+  taiwan:    "Taiwan history, politics, cross-strait relations, democracy, Taiwanese culture and society",
+  travel:    "travel, tourism, food culture, restaurants, hospitality, sightseeing, accommodation",
+  daily:     "daily life, casual conversation, errands, shopping, social situations, small talk",
+};
+
 export async function generateVocabulary(
   level: string = "B1-C1",
   numWords: number = 10,
-  excludeWords: string[] = []
+  excludeWords: string[] = [],
+  topics: string[] = ["lenny"]
 ): Promise<GeneratedVocabulary[]> {
   if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
     throw new Error("GEMINI_API_KEY or GOOGLE_API_KEY environment variable is required");
@@ -87,11 +96,18 @@ export async function generateVocabulary(
     ? ` Do not include these words: ${excludeWords.join(", ")}.`
     : "";
 
-  const lennyCount = numWords >= 10 ? 3 : numWords >= 6 ? 2 : 1;
-  const b1b2Count = numWords >= 8 ? 2 : 1;
-  const b2c1Count = numWords >= 8 ? 3 : numWords >= 6 ? 2 : 1;
-  const lennySamples = sampleFromLenny(lennyCount, excludeWords);
+  // 只有選了 lenny 主題才 sample Lenny 單字
+  const useLenny = topics.includes("lenny");
+  const lennyCount = useLenny ? (numWords >= 10 ? 3 : numWords >= 6 ? 2 : 1) : 0;
+  const lennySamples = useLenny ? sampleFromLenny(lennyCount, excludeWords) : [];
   const additionalCount = numWords - lennySamples.length;
+
+  // 組合主題描述給 Gemini
+  const topicDescriptions = topics
+    .filter((t) => TOPIC_PROMPTS[t])
+    .map((t) => TOPIC_PROMPTS[t])
+    .join("; ");
+  const topicInstruction = `Topics to draw from: ${topicDescriptions}. ${topics.length > 1 ? "Distribute words evenly across these topics." : ""}`;
 
   let prompt: string;
   if (lennySamples.length > 0 && additionalCount > 0) {
@@ -103,7 +119,7 @@ export async function generateVocabulary(
 Part 1 - From Lenny's Podcast (include these first, in order): For each item below, add "pronunciation" (KK Phonetic Symbol) and "definition" (English). Keep "word" and "sentence" exactly as given.
 ${lennyBlock}
 
-Part 2 - Generate ${additionalCount} more words: Each with word, pronunciation (KK), definition, and sentence. Level ${level}. Include at least ${b1b2Count} word(s) B1-B2 and at least ${b2c1Count} word(s) B2 or C1. At least 2 words must be commonly used in annual performance reviews or appraisals (e.g. performance review, appraisal, KPI, OKR, promotion); use example sentences that sound like real manager-employee evaluation conversations.${excludeWordsText}
+Part 2 - Generate ${additionalCount} more words at ${level} level. ${topicInstruction} Each word must have word, pronunciation (KK Phonetic Symbol), definition (English), and one natural example sentence.${excludeWordsText}
 
 Output format: JSON object with single key "words", value an array of ${numWords} objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.`;
   } else if (lennySamples.length > 0 && additionalCount <= 0) {
@@ -115,7 +131,7 @@ ${lennyBlock}
 
 Output format: JSON object with single key "words", value an array of objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.`;
   } else {
-    prompt = `Generate a list of ${numWords} English vocabulary words with KK Phonetic Symbol, with their English definition, and with one example sentence each, suitable for ${level} level. Format the output as a pure JSON array of objects. Please include at least ${b1b2Count} word${b1b2Count > 1 ? "s" : ""} in level B1-B2 and at least ${b2c1Count} word${b2c1Count > 1 ? "s" : ""} in level B2 or C1. Each object should have "word", "pronunciation", "definition", and "sentence" keys. Please consider at least ${lennyCount} word${lennyCount > 1 ? "s" : ""} from Lenny's Podcast's transcript and sentences, so it's more tech related. Also, make sure at least 2 of the words are commonly used by employees when talking about annual performance reviews or appraisals (e.g. performance review, appraisal, KPI, OKR, promotion discussion). These performance-review-related words should have example sentences that sound like real conversations between employees and managers about yearly evaluations. Do not include any extra text, explanation, or code block. Only output the JSON array.${excludeWordsText}`;
+    prompt = `Generate exactly ${numWords} English vocabulary words at ${level} level. ${topicInstruction} Each word must have word, pronunciation (KK Phonetic Symbol), definition (English), and one natural example sentence. Output format: JSON object with single key "words", value an array of ${numWords} objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.${excludeWordsText}`;
   }
 
   try {
