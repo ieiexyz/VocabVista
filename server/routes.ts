@@ -21,6 +21,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db.execute("SELECT COUNT(*) as cnt FROM vocabulary_words");
       res.json({
         ok: true,
+        buildTime: new Date().toISOString(),
         dbUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.slice(0, 40) + "..." : "NOT SET",
         vocabularyWordsCount: result.rows[0],
       });
