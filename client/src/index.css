@@ -63,16 +63,37 @@
   .card-hover {
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
+  /* 桌機 hover */
   .card-hover:hover {
     @apply -translate-y-0.5 shadow-lg;
   }
-  
-  .pronunciation {
-    @apply font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm;
+
+  /* 手機觸控 active 回饋 */
+  .card-hover:active {
+    @apply scale-[0.99] shadow-sm;
   }
-  
+
+  /* 減少動態效果偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    .card-hover {
+      @apply transition-none;
+    }
+    .card-hover:hover {
+      @apply translate-y-0 shadow-sm;
+    }
+  }
+
+  .pronunciation {
+    @apply font-mono bg-gray-100 dark:bg-muted px-2 py-1 rounded text-sm;
+  }
+
   .loading-spinner {
     @apply animate-spin;
+  }
+
+  /* 統一 focus ring，確保鍵盤導覽可見 */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 }

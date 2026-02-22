@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Wand2, Trash2, Shuffle, BookOpen, Bookmark, Play } from 'lucide-react';
+import { Wand2, Trash2, Shuffle, BookOpen, Bookmark, Play, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -52,15 +52,7 @@ export default function VocabularyPage() {
     savedCount
   } = useSavedWords();
 
-  useEffect(() => {
-    if (generationError) {
-      toast({
-        title: "Generation Failed",
-        description: generationError.message || "Failed to generate vocabulary. Please try again.",
-        variant: "destructive"
-      });
-    }
-  }, [generationError, toast]);
+  // 不再用 toast 顯示錯誤，改用 inline error state，避免 skeleton 殘留
 
   const handleGenerateVocabulary = () => {
     reset();
@@ -187,25 +179,55 @@ export default function VocabularyPage() {
               </div>
               {/* Topic Selector */}
               <div>
-                <p className="text-sm text-gray-500 mb-2">選擇單字主題（可多選）</p>
+                <p className="text-sm text-gray-500 mb-2">
+                  選擇單字主題（可多選，至少選一個）
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {TOPICS.map(topic => (
-                    <button
-                      key={topic.id}
-                      onClick={() => toggleTopic(topic.id)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-colors",
-                        selectedTopics.includes(topic.id)
-                          ? "bg-primary text-white border-primary"
-                          : "bg-white text-gray-600 border-gray-300 hover:border-primary hover:text-primary"
-                      )}
-                    >
-                      {topic.label}
-                    </button>
-                  ))}
+                  {TOPICS.map(topic => {
+                    const isSelected = selectedTopics.includes(topic.id);
+                    const isLastSelected = isSelected && selectedTopics.length === 1;
+                    return (
+                      <button
+                        key={topic.id}
+                        onClick={() => toggleTopic(topic.id)}
+                        disabled={isLastSelected}
+                        title={isLastSelected ? "至少需保留一個主題" : undefined}
+                        aria-pressed={isSelected}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-sm font-medium border transition-colors",
+                          isSelected
+                            ? isLastSelected
+                              ? "bg-primary text-white border-primary opacity-60 cursor-not-allowed"
+                              : "bg-primary text-white border-primary"
+                            : "bg-white text-gray-600 border-gray-300 hover:border-primary hover:text-primary active:bg-gray-100"
+                        )}
+                      >
+                        {topic.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
+
+            {/* Error State */}
+            {generationError && !isGenerating && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="text-red-400" size={28} />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">產生失敗</h3>
+                <p className="text-gray-500 text-sm mb-6 max-w-xs">
+                  {generationError.message?.includes("GEMINI") || generationError.message?.includes("API")
+                    ? "AI 服務暫時無法使用，請稍後再試"
+                    : "發生了一些問題，請再試一次"}
+                </p>
+                <Button onClick={handleGenerateVocabulary} className="bg-primary hover:bg-blue-700">
+                  <RefreshCw size={15} className="mr-2" />
+                  重新產生
+                </Button>
+              </div>
+            )}
 
             {/* Loading State - Skeleton Cards */}
             {isGenerating && (
@@ -244,7 +266,7 @@ export default function VocabularyPage() {
             )}
 
             {/* Empty State */}
-            {generatedWords.length === 0 && !isGenerating && (
+            {generatedWords.length === 0 && !isGenerating && !generationError && (
               <div className="text-center py-16">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <BookOpen className="text-gray-400" size={32} />

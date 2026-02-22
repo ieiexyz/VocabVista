@@ -22,24 +22,22 @@ export function Header({ savedCount, currentMode, onToggleMode }: HeaderProps) {
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex items-center space-x-2 bg-gray-100 px-3 py-1.5 rounded-full">
-              <Bookmark className="text-green-600" size={16} />
-              <span className="text-sm font-medium text-gray-700">
-                Saved: {savedCount}
-              </span>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1.5 bg-gray-100 px-2.5 py-1.5 rounded-full">
+              <Bookmark className="text-green-600 shrink-0" size={14} />
+              <span className="text-sm font-medium text-gray-700">{savedCount}</span>
             </div>
-            
-            <Button onClick={onToggleMode} className="bg-primary hover:bg-blue-700">
+
+            <Button onClick={onToggleMode} className="bg-primary hover:bg-blue-700 text-sm px-3">
               {currentMode === 'learning' ? (
                 <>
-                  <Eye size={16} className="mr-2" />
-                  <span className="hidden sm:inline">Review Mode</span>
+                  <Eye size={15} className="mr-1.5" />
+                  Review
                 </>
               ) : (
                 <>
-                  <Book size={16} className="mr-2" />
-                  <span className="hidden sm:inline">Learning Mode</span>
+                  <Book size={15} className="mr-1.5" />
+                  Learn
                 </>
               )}
             </Button>
