@@ -52,12 +52,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const vocabularyRaw = await generateVocabulary(level, numWords, mergedExcludeWords);
 
-      // 無論 AI 是否遵守，強制過濾掉已儲存 / 已出現過的單字
+      // 無論 AI 是否遵守，強制過濾掉已儲存 / 已出現過的單字，並對同一批做 dedup
       const normalizeWord = (w: string) => w.charAt(0).toLowerCase() + w.slice(1);
       const excludeSetFinal = new Set(mergedExcludeWords.map((w) => w.toLowerCase()));
-      const vocabulary = vocabularyRaw.filter(
-        (v) => !excludeSetFinal.has(normalizeWord(v.word).toLowerCase())
-      );
+      const seenInBatch = new Set<string>();
+      const vocabulary = vocabularyRaw.filter((v) => {
+        const key = normalizeWord(v.word).toLowerCase();
+        if (excludeSetFinal.has(key) || seenInBatch.has(key)) return false;
+        seenInBatch.add(key);
+        return true;
+      });
       const rowsToInsert: InsertVocabularyWord[] = vocabulary.map((v) => ({
         word: normalizeWord(v.word),
         pronunciation: v.pronunciation,

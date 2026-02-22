@@ -38,10 +38,37 @@ function getLennyVocabulary(): LennyVocabularyEntry[] {
   return lennyVocabularyCache;
 }
 
+// 太基本的常見字，不適合作為學習單字
+const BASIC_WORDS = new Set([
+  "about","after","again","also","back","because","been","before","being","between",
+  "bring","build","built","called","came","come","comes","could","doing","down","each",
+  "even","every","first","from","give","going","good","great","have","here","just",
+  "keep","know","last","leave","like","look","made","make","many","more","most","much",
+  "need","never","next","number","often","only","other","over","people","place","point",
+  "right","same","should","since","some","start","still","such","take","than","that",
+  "their","them","then","there","these","they","thing","think","this","time","under",
+  "until","upon","used","very","want","well","were","what","when","where","which",
+  "while","will","with","work","would","year","your",
+]);
+
+function isLikelyProperNoun(word: string): boolean {
+  // 人名通常出現在原句中為大寫開頭，且不是句首
+  // 這裡用簡單規則：單字在 lenny 資料中的 sentence 裡只以大寫出現
+  return false; // 讓下面的長度和基本字過濾處理即可
+}
+
 function sampleFromLenny(count: number, excludeWords: string[]): LennyVocabularyEntry[] {
   const list = getLennyVocabulary();
   const excludeSet = new Set(excludeWords.map((w) => w.toLowerCase()));
-  const pool = list.filter((e) => !excludeSet.has(e.word.toLowerCase()));
+  const pool = list.filter((e) => {
+    const w = e.word.toLowerCase();
+    if (excludeSet.has(w)) return false;
+    if (w.length < 6) return false;                  // 太短的字跳過
+    if (BASIC_WORDS.has(w)) return false;            // 太基本的字跳過
+    if (/^[a-z]/.test(e.word) === false) return false; // 非小寫開頭（可能是縮寫）跳過
+    if (/[^a-z\-]/.test(w)) return false;            // 含非字母字元跳過
+    return true;
+  });
   if (pool.length === 0 || count <= 0) return [];
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, shuffled.length));
