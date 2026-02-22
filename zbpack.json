@@ -1,5 +1,5 @@
 {
-  "build_command": "echo 'skip build'",
-  "start_command": "npm run start",
+  "build_command": "npm install",
+  "start_command": "node dist/index.js",
   "node_version": "20"
 }
