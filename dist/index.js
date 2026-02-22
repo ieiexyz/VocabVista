@@ -74,7 +74,7 @@ Output format: JSON object with single key "words", value an array of objects ea
   }
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       config: {
         responseMimeType: "application/json",
         responseSchema: {
