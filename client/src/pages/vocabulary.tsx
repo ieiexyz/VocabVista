@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Wand2, Trash2, Shuffle, BookOpen, Bookmark, Play, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,11 +12,11 @@ import { useVocabulary } from '@/hooks/use-vocabulary';
 import { useSavedWords } from '@/hooks/use-saved-words';
 
 const TOPICS = [
-  { id: "lenny",     label: "軟體管理趨勢" },
-  { id: "workplace", label: "日常職場" },
-  { id: "taiwan",    label: "台灣歷史與政治" },
-  { id: "travel",    label: "旅遊與美食" },
-  { id: "daily",     label: "生活需求與閒聊" },
+  { id: "lenny", label: "Tech Management" },
+  { id: "workplace", label: "Workplace" },
+  { id: "taiwan", label: "Taiwan Culture" },
+  { id: "travel", label: "Travel & Food" },
+  { id: "daily", label: "Daily Chat" },
 ];
 
 export default function VocabularyPage() {
@@ -57,10 +57,6 @@ export default function VocabularyPage() {
   const handleGenerateVocabulary = () => {
     reset();
     generateVocabulary({ level: 'B1-C1', numWords: 6, topics: selectedTopics });
-    toast({
-      title: "Generating vocabulary...",
-      description: "Please wait while we create new words for you."
-    });
   };
 
   const handleToggleSave = (word: any) => {
@@ -68,14 +64,16 @@ export default function VocabularyPage() {
       removeSavedWord(word.word);
       toast({
         title: "Word removed",
-        description: `"${word.word}" has been removed from your saved words.`
+        description: `"${word.word}" has been removed from your saved words.`,
+        duration: 2000,
       });
     } else {
       saveWord(word);
       toast({
         title: "Word saved!",
         description: `"${word.word}" has been added to your saved words.`,
-        variant: "default"
+        variant: "default",
+        duration: 2000,
       });
     }
   };
@@ -92,7 +90,8 @@ export default function VocabularyPage() {
       toast({
         title: "No saved words",
         description: "Save some words first to start reviewing.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -101,7 +100,8 @@ export default function VocabularyPage() {
     setReviewWords(randomWords);
     toast({
       title: "Random review",
-      description: `Reviewing ${randomWords.length} random words.`
+      description: `Reviewing ${randomWords.length} random words.`,
+      duration: 2000,
     });
   };
 
@@ -110,7 +110,8 @@ export default function VocabularyPage() {
       toast({
         title: "No saved words",
         description: "There are no words to clear.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -123,7 +124,8 @@ export default function VocabularyPage() {
     setReviewWords([]);
     toast({
       title: "All words cleared",
-      description: "All saved words have been removed."
+      description: "All saved words have been removed.",
+      duration: 3000,
     });
   };
 
@@ -134,23 +136,14 @@ export default function VocabularyPage() {
     setReviewWords(prev => prev.filter(w => w.word !== word));
     toast({
       title: "Word removed",
-      description: `"${word}" has been removed from your saved words.`
+      description: `"${word}" has been removed from your saved words.`,
+      duration: 2000,
     });
   };
 
-  useEffect(() => {
-    if (generatedWords.length > 0) {
-      toast({
-        title: "Vocabulary generated!",
-        description: `${generatedWords.length} new words are ready for learning.`,
-        variant: "default"
-      });
-    }
-  }, [generatedWords, toast]);
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
+      <Header
         savedCount={savedCount}
         currentMode={currentMode}
         onToggleMode={handleToggleMode}
@@ -180,7 +173,7 @@ export default function VocabularyPage() {
               {/* Topic Selector */}
               <div>
                 <p className="text-sm text-gray-500 mb-2">
-                  選擇單字主題（可多選，至少選一個）
+                  Select vocabulary topics (choose at least one)
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {TOPICS.map(topic => {
@@ -191,7 +184,7 @@ export default function VocabularyPage() {
                         key={topic.id}
                         onClick={() => toggleTopic(topic.id)}
                         disabled={isLastSelected}
-                        title={isLastSelected ? "至少需保留一個主題" : undefined}
+                        title={isLastSelected ? "At least one topic is required" : undefined}
                         aria-pressed={isSelected}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-sm font-medium border transition-colors",
@@ -216,15 +209,15 @@ export default function VocabularyPage() {
                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <AlertCircle className="text-red-400" size={28} />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">產生失敗</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Generation Failed</h3>
                 <p className="text-gray-500 text-sm mb-6 max-w-xs">
                   {generationError.message?.includes("GEMINI") || generationError.message?.includes("API")
-                    ? "AI 服務暫時無法使用，請稍後再試"
-                    : "發生了一些問題，請再試一次"}
+                    ? "AI service is temporarily unavailable, please try again later."
+                    : "Something went wrong, please try again."}
                 </p>
                 <Button onClick={handleGenerateVocabulary} className="bg-primary hover:bg-blue-700">
                   <RefreshCw size={15} className="mr-2" />
-                  重新產生
+                  Try Again
                 </Button>
               </div>
             )}
@@ -294,7 +287,7 @@ export default function VocabularyPage() {
                   Random Review
                 </Button>
               </div>
-              
+
               <div className="flex items-center space-x-4 text-sm text-gray-600">
                 <span className="flex items-center space-x-1">
                   <Bookmark className="text-green-600" size={16} />
@@ -326,12 +319,12 @@ export default function VocabularyPage() {
                   {savedCount === 0 ? 'No Saved Words Yet' : 'Start a Random Review'}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {savedCount === 0 
+                  {savedCount === 0
                     ? 'Save words from the learning mode to review them here'
                     : 'Click "Random Review" to practice your saved vocabulary'
                   }
                 </p>
-                <Button 
+                <Button
                   onClick={savedCount === 0 ? handleToggleMode : handleReviewRandom}
                   className="bg-primary hover:bg-blue-700"
                 >
