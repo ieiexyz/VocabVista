@@ -83,11 +83,15 @@ const TOPIC_PROMPTS: Record<string, string> = {
 };
 
 export async function generateVocabulary(
-  level: string = "B1-C1",
+  levels: string[] = ["B1", "B2"],
   numWords: number = 10,
   excludeWords: string[] = [],
   topics: string[] = ["lenny"]
 ): Promise<GeneratedVocabulary[]> {
+  const levelStr = levels.length === 1 ? levels[0] : levels.join(", ");
+  const levelInstruction = levels.length === 1
+    ? `at ${levels[0]} level`
+    : `at ${levelStr} level (distribute words evenly across these difficulty levels)`;
   if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
     throw new Error("GEMINI_API_KEY or GOOGLE_API_KEY environment variable is required");
   }
@@ -119,7 +123,7 @@ export async function generateVocabulary(
 Part 1 - From Lenny's Podcast (include these first, in order): For each item below, add "pronunciation" (KK Phonetic Symbol) and "definition" (English). Keep "word" and "sentence" exactly as given.
 ${lennyBlock}
 
-Part 2 - Generate ${additionalCount} more words at ${level} level. ${topicInstruction} Each word must have word, pronunciation (KK Phonetic Symbol), definition (English), and one natural example sentence.${excludeWordsText}
+Part 2 - Generate ${additionalCount} more words ${levelInstruction}. ${topicInstruction} Each word must have word, pronunciation (KK Phonetic Symbol), definition (English), and one natural example sentence.${excludeWordsText}
 
 Output format: JSON object with single key "words", value an array of ${numWords} objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.`;
   } else if (lennySamples.length > 0 && additionalCount <= 0) {
@@ -131,7 +135,7 @@ ${lennyBlock}
 
 Output format: JSON object with single key "words", value an array of objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.`;
   } else {
-    prompt = `Generate exactly ${numWords} English vocabulary words at ${level} level. ${topicInstruction} Each word must have word, pronunciation (KK Phonetic Symbol), definition (English), and one natural example sentence. Output format: JSON object with single key "words", value an array of ${numWords} objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.${excludeWordsText}`;
+    prompt = `Generate exactly ${numWords} English vocabulary words ${levelInstruction}. ${topicInstruction} Each word must have word, pronunciation (KK Phonetic Symbol), definition (English), and one natural example sentence. Output format: JSON object with single key "words", value an array of ${numWords} objects each with keys: word, pronunciation, definition, sentence. No extra text or code block.${excludeWordsText}`;
   }
 
   try {
@@ -178,7 +182,7 @@ Output format: JSON object with single key "words", value an array of objects ea
       pronunciation: (item.pronunciation as string) || "N/A",
       definition: (item.definition as string) || "N/A",
       sentence: (item.sentence as string) || "N/A",
-      level,
+      level: levelStr,
     }));
   } catch (error) {
     console.error("Error generating vocabulary:", error);

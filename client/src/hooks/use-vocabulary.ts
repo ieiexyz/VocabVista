@@ -13,7 +13,7 @@ export interface VocabularyWord {
 }
 
 interface GenerateVocabularyRequest {
-  level?: string;
+  levels?: string[];
   numWords?: number;
   topics?: string[];
 }
@@ -59,7 +59,7 @@ export function useVocabulary() {
       const excludeWords = shouldResetHistory ? [] : Array.from(previousWords);
       
       const response = await apiRequest('POST', '/api/vocabulary/generate', {
-        level: request.level || 'B1-C1',
+        levels: request.levels ?? ["B1", "B2"],
         numWords: request.numWords || 6,
         excludeWords,
         anonymousId: storage.getAnonymousId(),

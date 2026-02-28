@@ -33,7 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate vocabulary endpoint
   app.post("/api/vocabulary/generate", async (req, res) => {
     try {
-      const { level, numWords, excludeWords, anonymousId, topics } = vocabularyRequestSchema.parse(req.body);
+      const { levels, numWords, excludeWords, anonymousId, topics } = vocabularyRequestSchema.parse(req.body);
       let mergedExcludeWords = [...(excludeWords ?? [])];
       if (anonymousId) {
         const saved = await db
@@ -50,7 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      const vocabularyRaw = await generateVocabulary(level, numWords, mergedExcludeWords, topics);
+      const vocabularyRaw = await generateVocabulary(levels, numWords, mergedExcludeWords, topics);
 
       // 無論 AI 是否遵守，強制過濾掉已儲存 / 已出現過的單字，並對同一批做 dedup
       // 全大寫縮寫（KPI, OKR 等）保留原樣，其餘只將首字母改小寫
@@ -69,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pronunciation: v.pronunciation,
         definition: v.definition,
         sentence: v.sentence,
-        level: v.level ?? level,
+        level: v.level ?? levels.join(", "),
       }));
 
       // insert 新單字，若 word 已存在（unique constraint）則略過，直接用 returning 取得新插入的資料
